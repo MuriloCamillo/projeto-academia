@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="'Treinos de ' + ${aluno != null ? aluno.nome : 'Aluno Desconhecido'}"></title>
+  <link rel="stylesheet" type="text/css" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="nav-links">
+  <a th:href="@{/web/alunos}">Voltar para Lista de Alunos</a>
+</div>
+
+<h1 th:if="${aluno != null}" th:text="'Treinos de ' + ${aluno.nome}">Treinos</h1>
+<h3 th:if="${aluno != null}" th:text="'ID do Aluno: ' + ${aluno.id}"></h3>
+<div th:if="${aluno == null}">
+  <h1>Aluno não especificado ou não encontrado.</h1>
+</div>
+
+<div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
+<div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
+
+<a th:if="${aluno != null}" th:href="@{/web/alunos/{alunoId}/treinos/novo(alunoId=${aluno.id})}" class="add-button">Novo Treino</a>
+
+<div th:if="${aluno != null}">
+  <table>
+    <thead>
+    <tr>
+      <th>ID Treino</th>
+      <th>Nome</th>
+      <th>Descrição</th>
+      <th>Data Criação</th>
+      <th>Ações</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="treino : ${treinos}">
+      <td th:text="${treino.id}"></td>
+      <td th:text="${treino.nome}"></td>
+      <td th:text="${treino.descricao ?: '-'}"></td>
+      <td th:text="${treino.dataCriacao != null ? #temporals.format(treino.dataCriacao, 'dd/MM/yyyy') : '-'}"></td>
+      <td class="actions">
+        <a th:href="@{/web/alunos/{alunoId}/treinos/editar/{treinoId}(alunoId=${aluno.id}, treinoId=${treino.id})}" class="edit-link">Editar</a>
+        <a th:href="@{/web/alunos/{alunoId}/treinos/deletar/{treinoId}(alunoId=${aluno.id}, treinoId=${treino.id})}" class="delete-link"
+           onclick="return confirm('Tem certeza que deseja deletar este treino?');">Deletar</a>
+      </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(treinos)}">
+      <td colspan="5">Nenhum treino cadastrado para este aluno.</td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>
