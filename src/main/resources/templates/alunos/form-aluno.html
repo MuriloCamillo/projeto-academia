@@ -9,16 +9,22 @@
 <div class="form-container">
   <h1 th:text="${pageTitle} ?: 'Formulário do Aluno'">Formulário do Aluno</h1>
 
-  <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
+  <div th:if="${errorMessageGlobal}" class="message error" th:text="${errorMessageGlobal}"></div>
 
-  <form th:if="${alunoId == null}" th:action="@{/web/alunos/criar}" method="post" th:object="${alunoForm}">
+  <!-- Formulário para CRIAR Aluno -->
+  <form th:if="${alunoId == null}" id="alunoCreateForm"
+        th:action="@{/web/alunos/criar}" method="post" th:object="${alunoForm}"
+        onsubmit="unmaskFields(this);"> <!-- Chama unmaskFields antes de submeter -->
     <div th:replace="~{alunos/_formFields :: formFields}"></div>
     <div>
       <button type="submit">Cadastrar</button>
     </div>
   </form>
 
-  <form th:if="${alunoId != null}" th:action="@{/web/alunos/atualizar/{id}(id=${alunoId})}" method="post" th:object="${alunoForm}">
+  <!-- Formulário para ATUALIZAR Aluno -->
+  <form th:if="${alunoId != null}" id="alunoUpdateForm"
+        th:action="@{/web/alunos/atualizar/{id}(id=${alunoId})}" method="post" th:object="${alunoForm}"
+        onsubmit="unmaskFields(this);"> <!-- Chama unmaskFields antes de submeter -->
     <div th:replace="~{alunos/_formFields :: formFields}"></div>
     <div>
       <button type="submit">Atualizar</button>
@@ -29,5 +35,9 @@
     <a th:href="@{/web/alunos}">Voltar para Lista de Alunos</a>
   </div>
 </div>
+
+<!-- Inclui o fragmento de script que contém unmaskFields e as funções de máscara -->
+<div th:replace="~{alunos/_formFields :: formAlunoScripts}"></div>
+
 </body>
 </html>

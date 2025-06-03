@@ -1,176 +1,262 @@
 package br.com.gymtime.webcontroller;
 
-import br.com.gymtime.dto.AlunoDTO;
-import br.com.gymtime.dto.TreinoDTO;
-import br.com.gymtime.exception.ResourceNotFoundException; // Importe
+import br.com.gymtime.dto.AlunoResponseDTO;
+import br.com.gymtime.dto.ExercicioCreateDTO;
+import br.com.gymtime.dto.TreinoCreateDTO;
+import br.com.gymtime.dto.TreinoResponseDTO;
+import br.com.gymtime.dto.TreinoUpdateDTO;
+import br.com.gymtime.exception.ResourceNotFoundException;
 import br.com.gymtime.service.AlunoService;
 import br.com.gymtime.service.TreinoService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/web/alunos/{alunoId}/treinos")
 public class TreinoWebController {
 
+    private static final Logger logger = LoggerFactory.getLogger(TreinoWebController.class);
+
     private final TreinoService treinoService;
     private final AlunoService alunoService;
 
+    @Autowired
     public TreinoWebController(TreinoService treinoService, AlunoService alunoService) {
         this.treinoService = treinoService;
         this.alunoService = alunoService;
     }
 
-    // Método auxiliar para verificar e adicionar aluno ao model
-    private Optional<AlunoDTO> carregarAlunoParaModel(Long alunoId, Model model) {
-        Optional<AlunoDTO> alunoOpt = alunoService.getAlunoById(alunoId);
+    /**
+     * Método auxiliar para carregar os dados do aluno e adicioná-los ao Model.
+     * Retorna um Optional do AlunoResponseDTO.
+     * Se o aluno não for encontrado, adiciona uma mensagem de erro global ao model.
+     */
+    private Optional<AlunoResponseDTO> carregarAlunoParaModel(Long alunoId, Model model) {
+        Optional<AlunoResponseDTO> alunoOpt = alunoService.getAlunoById(alunoId);
         if (alunoOpt.isEmpty()) {
-            // Adicionar mensagem de erro para a view ou redirect attributes se for redirecionar
-            model.addAttribute("errorMessage", "Aluno com ID " + alunoId + " não encontrado.");
+            logger.warn("Tentativa de acessar treinos para aluno não encontrado com ID: {}", alunoId);
+            model.addAttribute("errorMessageGlobal", "Aluno com ID " + alunoId + " não encontrado.");
             return Optional.empty();
         }
-        model.addAttribute("aluno", alunoOpt.get());
+        model.addAttribute("aluno", alunoOpt.get()); // Adiciona o AlunoResponseDTO ao model
         return alunoOpt;
     }
 
+    /**
+     * Exibe a lista de treinos para um aluno específico.
+     */
     @GetMapping
     public String listarTreinosDoAluno(@PathVariable Long alunoId, Model model, RedirectAttributes redirectAttributes) {
+        logger.info("Listando treinos para aluno ID: {}", alunoId);
         if (carregarAlunoParaModel(alunoId, model).isEmpty()) {
-            // A mensagem de erro já foi adicionada ao model por carregarAlunoParaModel
-            // Ou podemos redirecionar se preferir:
-            redirectAttributes.addFlashAttribute("errorMessage", "Aluno com ID " + alunoId + " não encontrado.");
+            // Se carregarAlunoParaModel já adiciona a mensagem, podemos apenas redirecionar
+            // ou confiar que a view de destino (lista de alunos) mostrará o erro.
+            // Para ser mais explícito com redirectAttributes:
+            redirectAttributes.addFlashAttribute("errorMessage", model.getAttribute("errorMessageGlobal"));
             return "redirect:/web/alunos";
         }
-        List<TreinoDTO> treinos = treinoService.getTreinosByAlunoId(alunoId);
+        List<TreinoResponseDTO> treinos = treinoService.getTreinosByAlunoId(alunoId);
         model.addAttribute("treinos", treinos);
-        return "treinos/lista-treinos";
+        return "treinos/lista-treinos"; // Path: templates/treinos/lista-treinos.html
     }
 
+    /**
+     * Mostra o formulário para criar um novo treino para um aluno.
+     */
     @GetMapping("/novo")
     public String mostrarFormularioNovoTreino(@PathVariable Long alunoId, Model model, RedirectAttributes redirectAttributes) {
-        Optional<AlunoDTO> alunoOpt = carregarAlunoParaModel(alunoId, model);
+        logger.info("Mostrando formulário de novo treino para aluno ID: {}", alunoId);
+        Optional<AlunoResponseDTO> alunoOpt = carregarAlunoParaModel(alunoId, model);
         if (alunoOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Aluno com ID " + alunoId + " não encontrado para adicionar treino.");
+            redirectAttributes.addFlashAttribute("errorMessage", model.getAttribute("errorMessageGlobal"));
             return "redirect:/web/alunos";
         }
-        model.addAttribute("treinoForm", new TreinoDTO.TreinoCreateDTO("", "", alunoId)); // "treinoForm" e passa alunoId
+
+        List<ExercicioCreateDTO> exerciciosIniciais = new ArrayList<>();
+        // Opcional: Adicionar um campo de exercício em branco por padrão
+        // exerciciosIniciais.add(new ExercicioCreateDTO("", ""));
+
+        model.addAttribute("treinoForm", new TreinoCreateDTO("", "", alunoId, exerciciosIniciais));
         model.addAttribute("pageTitle", "Novo Treino para " + alunoOpt.get().nome());
-        // treinoId será null aqui, o que é usado no template form-treino.html para diferenciar
-        return "treinos/form-treino";
+        model.addAttribute("treinoId", null); // Indica que é um novo treino (para lógica no template)
+        return "treinos/form-treino"; // Path: templates/treinos/form-treino.html
     }
 
-    @PostMapping("/criar") // Endpoint para criar treino
+    /**
+     * Processa a submissão do formulário para criar um novo treino.
+     */
+    @PostMapping("/criar")
     public String criarTreino(@PathVariable Long alunoId,
-                              @Valid @ModelAttribute("treinoForm") TreinoDTO.TreinoCreateDTO treinoCreateDTO,
-                              BindingResult bindingResult,
+                              @Valid @ModelAttribute("treinoForm") TreinoCreateDTO treinoCreateDTO,
+                              BindingResult bindingResult, // Contém os resultados da validação
                               Model model, RedirectAttributes redirectAttributes) {
 
-        Optional<AlunoDTO> alunoOpt = carregarAlunoParaModel(alunoId, model);
+        logger.info("POST para /criar treino para alunoId: {}. Dados recebidos: {}", alunoId, treinoCreateDTO);
+
+        Optional<AlunoResponseDTO> alunoOpt = carregarAlunoParaModel(alunoId, model);
         if (alunoOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Aluno com ID " + alunoId + " não encontrado.");
+            redirectAttributes.addFlashAttribute("errorMessage", model.getAttribute("errorMessageGlobal"));
             return "redirect:/web/alunos";
         }
+        // Adiciona atributos necessários para renderizar o form novamente em caso de erro
         model.addAttribute("pageTitle", "Novo Treino para " + alunoOpt.get().nome());
+        model.addAttribute("treinoId", null); // Garante que o template saiba que é criação
 
-        // Validação adicional para garantir que o alunoId no DTO (se ainda existir) corresponde ao do path
-        if (!treinoCreateDTO.alunoId().equals(alunoId)) {
-            bindingResult.rejectValue("alunoId", "error.treinoCreateDTO", "Inconsistência no ID do aluno associado.");
+        // Validação adicional: o alunoId no DTO deve corresponder ao alunoId do path
+        if (treinoCreateDTO.alunoId() == null || !treinoCreateDTO.alunoId().equals(alunoId)) {
+            logger.warn("Inconsistência no ID do aluno. Path: {}, DTO alunoId: {}", alunoId, treinoCreateDTO.alunoId());
+            // Adicionar um erro global ou específico ao campo se ele existir no DTO
+            bindingResult.reject("alunoIdInvalido", "ID do aluno no formulário é inválido ou não corresponde ao da URL.");
         }
 
+        // Se houver erros de validação (incluindo dos @NotBlank nos ExercicioCreateDTO)
         if (bindingResult.hasErrors()) {
-            // "treinoForm" já está no model devido ao @ModelAttribute
+            logger.warn("Erros de validação ao criar treino: {}", bindingResult.getAllErrors());
+            // O objeto "treinoForm" (que é o treinoCreateDTO com os dados submetidos e erros)
+            // já está no model por causa do @ModelAttribute. O Thymeleaf o usará para
+            // repopular o formulário e exibir os erros.
             return "treinos/form-treino";
         }
+
         try {
+            // O TreinoServiceImpl irá iterar sobre treinoCreateDTO.exercicios()
+            logger.info("Chamando treinoService.createTreino com: {}", treinoCreateDTO);
             treinoService.createTreino(treinoCreateDTO);
             redirectAttributes.addFlashAttribute("successMessage", "Treino cadastrado com sucesso!");
+            logger.info("Treino criado com sucesso para aluno ID: {}", alunoId);
         } catch (Exception e) {
-            model.addAttribute("errorMessage", "Erro ao cadastrar treino: " + e.getMessage());
+            logger.error("Erro EXCEPCIONAL ao cadastrar treino para aluno ID: {}. Erro: {}", alunoId, e.getMessage(), e);
+            model.addAttribute("errorMessageGlobal", "Erro ao cadastrar treino: " + e.getMessage());
             // "treinoForm" já está no model
-            return "treinos/form-treino";
+            return "treinos/form-treino"; // Retorna ao formulário com a mensagem de erro global
         }
         return "redirect:/web/alunos/" + alunoId + "/treinos";
     }
 
+    /**
+     * Mostra o formulário para editar um treino existente.
+     */
     @GetMapping("/editar/{treinoId}")
     public String mostrarFormularioEditarTreino(@PathVariable Long alunoId, @PathVariable Long treinoId, Model model, RedirectAttributes redirectAttributes) {
-        Optional<AlunoDTO> alunoOpt = carregarAlunoParaModel(alunoId, model);
+        logger.info("Mostrando formulário de edição para treino ID: {} do aluno ID: {}", treinoId, alunoId);
+        Optional<AlunoResponseDTO> alunoOpt = carregarAlunoParaModel(alunoId, model);
         if (alunoOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Aluno com ID " + alunoId + " não encontrado.");
+            redirectAttributes.addFlashAttribute("errorMessage", model.getAttribute("errorMessageGlobal"));
             return "redirect:/web/alunos";
         }
 
-        Optional<TreinoDTO> treinoOpt = treinoService.getTreinoById(treinoId); // O seu getTreinoById não filtra por alunoId
-        if (treinoOpt.isEmpty() || !treinoOpt.get().alunoId().equals(alunoId)) {
+        Optional<TreinoResponseDTO> treinoOpt = treinoService.getTreinoByIdAndAlunoId(treinoId, alunoId);
+        if (treinoOpt.isEmpty()) {
+            logger.warn("Treino ID: {} não encontrado ou não pertence ao aluno ID: {}", treinoId, alunoId);
             redirectAttributes.addFlashAttribute("errorMessage", "Treino não encontrado ou não pertence a este aluno.");
             return "redirect:/web/alunos/" + alunoId + "/treinos";
         }
 
-        TreinoDTO treinoDTO = treinoOpt.get();
-        // Usar TreinoUpdateDTO para o formulário de edição
-        model.addAttribute("treinoForm", new TreinoDTO.TreinoUpdateDTO(treinoDTO.nome(), treinoDTO.descricao()));
-        model.addAttribute("treinoId", treinoId); // Para o action e lógica do template
+        TreinoResponseDTO treinoExistente = treinoOpt.get();
+        List<ExercicioCreateDTO> exerciciosParaForm = Collections.emptyList();
+        if(treinoExistente.exercicios() != null){
+            exerciciosParaForm = treinoExistente.exercicios().stream()
+                    .map(exResp -> new ExercicioCreateDTO(exResp.nomeExercicio(), exResp.seriesRepeticoes()))
+                    .collect(Collectors.toList());
+        }
+
+        model.addAttribute("treinoForm", new TreinoUpdateDTO(
+                treinoExistente.nome(),
+                treinoExistente.descricao(),
+                exerciciosParaForm
+        ));
+        model.addAttribute("treinoId", treinoId); // Para a action e lógica do template
         model.addAttribute("pageTitle", "Editar Treino de " + alunoOpt.get().nome());
         return "treinos/form-treino";
     }
 
-    @PostMapping("/atualizar/{treinoId}") // Endpoint para atualizar treino
+    /**
+     * Processa a submissão do formulário para atualizar um treino existente.
+     */
+    @PostMapping("/atualizar/{treinoId}")
     public String atualizarTreino(@PathVariable Long alunoId, @PathVariable Long treinoId,
-                                  @Valid @ModelAttribute("treinoForm") TreinoDTO.TreinoUpdateDTO treinoUpdateDTO,
+                                  @Valid @ModelAttribute("treinoForm") TreinoUpdateDTO treinoUpdateDTO,
                                   BindingResult bindingResult,
                                   Model model, RedirectAttributes redirectAttributes) {
+        logger.info("POST para /atualizar treino ID: {} para alunoId: {}. Dados recebidos: {}", treinoId, alunoId, treinoUpdateDTO);
 
-        Optional<AlunoDTO> alunoOpt = carregarAlunoParaModel(alunoId, model);
+        Optional<AlunoResponseDTO> alunoOpt = carregarAlunoParaModel(alunoId, model);
         if (alunoOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Aluno com ID " + alunoId + " não encontrado.");
+            redirectAttributes.addFlashAttribute("errorMessage", model.getAttribute("errorMessageGlobal"));
             return "redirect:/web/alunos";
         }
         model.addAttribute("pageTitle", "Editar Treino de " + alunoOpt.get().nome());
         model.addAttribute("treinoId", treinoId); // Para repopular form em caso de erro
 
-        // Validação para garantir que o treino pertence ao aluno (se o service não fizer isso)
-        Optional<TreinoDTO> treinoExistenteOpt = treinoService.getTreinoById(treinoId);
-        if (treinoExistenteOpt.isEmpty() || !treinoExistenteOpt.get().alunoId().equals(alunoId)) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Treino inválido ou não pertence a este aluno.");
+        // Validação adicional para garantir que o treino que está sendo editado realmente pertence ao aluno da URL
+        Optional<TreinoResponseDTO> treinoExistenteOpt = treinoService.getTreinoByIdAndAlunoId(treinoId, alunoId);
+        if (treinoExistenteOpt.isEmpty()) {
+            logger.warn("Tentativa de atualizar treino ID: {} que não pertence ao aluno ID: {} ou não existe.", treinoId, alunoId);
+            redirectAttributes.addFlashAttribute("errorMessage", "Operação inválida: Treino não encontrado ou não pertence a este aluno.");
             return "redirect:/web/alunos/" + alunoId + "/treinos";
         }
 
         if (bindingResult.hasErrors()) {
-            // "treinoForm" já está no model
+            logger.warn("Erros de validação ao atualizar treino ID: {}: {}", treinoId, bindingResult.getAllErrors());
+            // "treinoForm" (treinoUpdateDTO com os dados submetidos e erros) já está no model
             return "treinos/form-treino";
         }
         try {
-            treinoService.updateTreino(treinoId, treinoUpdateDTO); // O service.updateTreino não valida o alunoId
+            logger.info("Chamando treinoService.updateTreino para treino ID: {} com: {}", treinoId, treinoUpdateDTO);
+            treinoService.updateTreino(treinoId, treinoUpdateDTO);
             redirectAttributes.addFlashAttribute("successMessage", "Treino atualizado com sucesso!");
+            logger.info("Treino ID: {} atualizado com sucesso para aluno ID: {}", treinoId, alunoId);
         } catch (ResourceNotFoundException e) {
+            logger.warn("ResourceNotFoundException ao atualizar treino ID: {}: {}", treinoId, e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/web/alunos/" + alunoId + "/treinos";
         } catch (Exception e) {
-            model.addAttribute("errorMessage", "Erro ao atualizar treino: " + e.getMessage());
+            logger.error("Erro EXCEPCIONAL ao atualizar treino ID: {} para aluno ID: {}", treinoId, alunoId, e);
+            model.addAttribute("errorMessageGlobal", "Erro ao atualizar treino: " + e.getMessage());
             // "treinoForm" já está no model
             return "treinos/form-treino";
         }
         return "redirect:/web/alunos/" + alunoId + "/treinos";
     }
 
+    /**
+     * Deleta um treino específico de um aluno.
+     */
     @GetMapping("/deletar/{treinoId}")
     public String deletarTreino(@PathVariable Long alunoId, @PathVariable Long treinoId, RedirectAttributes redirectAttributes) {
-        // Adicionar verificação se o treino pertence ao aluno antes de deletar
-        Optional<TreinoDTO> treinoOpt = treinoService.getTreinoById(treinoId);
-        if (treinoOpt.isPresent() && treinoOpt.get().alunoId().equals(alunoId)) {
+        logger.info("Tentando deletar treino ID: {} do aluno ID: {}", treinoId, alunoId);
+        // Valida se o aluno existe primeiro
+        if (alunoService.getAlunoById(alunoId).isEmpty()) {
+            logger.warn("Tentativa de deletar treino para aluno não existente ID: {}", alunoId);
+            redirectAttributes.addFlashAttribute("errorMessage", "Aluno não encontrado.");
+            return "redirect:/web/alunos";
+        }
+
+        Optional<TreinoResponseDTO> treinoOpt = treinoService.getTreinoByIdAndAlunoId(treinoId, alunoId);
+        if (treinoOpt.isPresent()) {
             try {
                 treinoService.deleteTreino(treinoId);
                 redirectAttributes.addFlashAttribute("successMessage", "Treino deletado com sucesso!");
+                logger.info("Treino ID: {} deletado com sucesso.", treinoId);
             } catch (Exception e) {
+                logger.error("Erro ao deletar treino ID: {}", treinoId, e);
                 redirectAttributes.addFlashAttribute("errorMessage", "Erro ao deletar treino: " + e.getMessage());
             }
         } else {
+            logger.warn("Tentativa de deletar treino ID: {} que não pertence ao aluno ID: {} ou não existe.", treinoId, alunoId);
             redirectAttributes.addFlashAttribute("errorMessage", "Treino não encontrado ou não pertence a este aluno.");
         }
         return "redirect:/web/alunos/" + alunoId + "/treinos";
