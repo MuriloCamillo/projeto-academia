@@ -4,46 +4,59 @@
     <meta charset="UTF-8">
     <title>Lista de Alunos</title>
     <link rel="stylesheet" type="text/css" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
-<h1>Alunos Cadastrados</h1>
+<div class="page-container">
+    <div class="header-actions">
+        <h1>Alunos Cadastrados</h1>
+        <a th:href="@{/web/alunos/novo}" class="add-button">
+            <i class="fa-solid fa-user-plus"></i> Novo Aluno
+        </a>
+    </div>
 
-<div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
-<div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
 
-<a th:href="@{/web/alunos/novo}" class="add-button">Novo Aluno</a>
+    <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
 
-<table>
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Nome</th>
-        <th>Email</th>
-        <th>Telefone</th>
-        <th>CPF</th>
-        <th>Nº Treinos</th>
-        <th>Ações</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="aluno : ${alunos}"> <!-- aluno aqui é AlunoResponseDTO -->
-        <td th:text="${aluno.id}"></td>
-        <td th:text="${aluno.nome}"></td>
-        <td th:text="${aluno.email}"></td>
-        <td th:text="${aluno.getFormattedTelefone()} ?: '-'"></td> <!-- Usa método formatado -->
-        <td th:text="${aluno.getFormattedCpf()}"></td> <!-- Usa método formatado -->
-        <td th:text="${aluno.treinos().size()}"></td>
-        <td class="actions">
-            <a th:href="@{/web/alunos/editar/{id}(id=${aluno.id})}" class="edit-link">Editar</a>
-            <a th:href="@{/web/alunos/deletar/{id}(id=${aluno.id})}" class="delete-link"
-               onclick="return confirm('Tem certeza que deseja deletar este aluno?');">Deletar</a>
-            <a th:href="@{/web/alunos/{alunoId}/treinos(alunoId=${aluno.id})}" class="view-link">Ver Treinos</a>
-        </td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(alunos)}">
-        <td colspan="6">Nenhum aluno cadastrado.</td>
-    </tr>
-    </tbody>
-</table>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Telefone</th>
+            <th>CPF</th>
+            <th>Nº Treinos</th>
+            <th>Ações</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="aluno : ${alunos}">
+            <td th:text="${aluno.id}"></td>
+            <td th:text="${aluno.nome}"></td>
+            <td th:text="${aluno.email}"></td>
+            <td th:text="${aluno.getFormattedTelefone()} ?: '-'"></td>
+            <td th:text="${aluno.getFormattedCpf()}"></td>
+            <td th:text="${aluno.treinos().size()}"></td>
+            <td class="actions">
+                <a th:href="@{/web/alunos/{alunoId}/treinos(alunoId=${aluno.id})}" class="view-link" title="Ver Treinos">
+                    <i class="fa-solid fa-dumbbell"></i>
+                </a>
+                <a th:href="@{/web/alunos/editar/{id}(id=${aluno.id})}" class="edit-link" title="Editar Aluno">
+                    <i class="fa-solid fa-user-pen"></i>
+                </a>
+                <a th:href="@{/web/alunos/deletar/{id}(id=${aluno.id})}" class="delete-link" title="Deletar Aluno"
+                   onclick="return confirm('Tem certeza que deseja deletar este aluno?');">
+                    <i class="fa-solid fa-user-slash"></i>
+                </a>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(alunos)}">
+            <td colspan="7">Nenhum aluno cadastrado.</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 </body>
 </html>

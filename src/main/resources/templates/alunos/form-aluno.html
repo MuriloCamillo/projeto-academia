@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <title th:text="${pageTitle} ?: 'Formulário do Aluno'"></title>
   <link rel="stylesheet" type="text/css" th:href="@{/css/style.css}">
+  <!-- Link para os ícones do Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 <div class="form-container">
@@ -11,33 +13,40 @@
 
   <div th:if="${errorMessageGlobal}" class="message error" th:text="${errorMessageGlobal}"></div>
 
-  <!-- Formulário para CRIAR Aluno -->
+  <!-- Formulário de Criação -->
   <form th:if="${alunoId == null}" id="alunoCreateForm"
         th:action="@{/web/alunos/criar}" method="post" th:object="${alunoForm}"
-        onsubmit="unmaskFields(this);"> <!-- Chama unmaskFields antes de submeter -->
+        onsubmit="unmaskFields(this);">
     <div th:replace="~{alunos/_formFields :: formFields}"></div>
     <div>
-      <button type="submit">Cadastrar</button>
+      <button type="submit">
+        <i class="fa-solid fa-plus"></i> Cadastrar
+      </button>
     </div>
   </form>
 
-  <!-- Formulário para ATUALIZAR Aluno -->
+  <!-- Formulário de Atualização -->
   <form th:if="${alunoId != null}" id="alunoUpdateForm"
         th:action="@{/web/alunos/atualizar/{id}(id=${alunoId})}" method="post" th:object="${alunoForm}"
-        onsubmit="unmaskFields(this);"> <!-- Chama unmaskFields antes de submeter -->
+        onsubmit="unmaskFields(this);">
     <div th:replace="~{alunos/_formFields :: formFields}"></div>
     <div>
-      <button type="submit">Atualizar</button>
+      <button type="submit">
+        <i class="fa-solid fa-floppy-disk"></i> Atualizar
+      </button>
     </div>
   </form>
 
-  <div class="nav-links" style="margin-top: 20px;">
-    <a th:href="@{/web/alunos}">Voltar para Lista de Alunos</a>
+  <!-- SEÇÃO DE NAVEGAÇÃO MODIFICADA -->
+  <div class="form-footer-nav">
+    <a th:href="@{/web/alunos}" class="back-link">
+      <i class="fa-solid fa-arrow-left"></i>
+      Voltar para Lista de Alunos
+    </a>
   </div>
 </div>
 
-<!-- Inclui o fragmento de script que contém unmaskFields e as funções de máscara -->
-<div th:replace="~{alunos/_formFields :: formAlunoScripts}"></div>
+<script th:src="@{/js/form-aluno.js}" defer></script>
 
 </body>
 </html>

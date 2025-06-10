@@ -12,6 +12,9 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -23,6 +26,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+
 
 @Controller
 @RequestMapping("/web/alunos/{alunoId}/treinos")
@@ -242,17 +260,94 @@ public class TreinoWebController {
             // Verificar se o treino pertence ao aluno antes de deletar
             Optional<TreinoResponseDTO> treino = treinoService.getTreinoByIdAndAlunoId(treinoId, alunoId);
             if (treino.isEmpty()) {
-                redirectAttributes.addFlashAttribute("erro",
+                redirectAttributes.addFlashAttribute("errorMessage", // <-- CORRIGIDO
                         "Treino não encontrado ou não pertence a este aluno.");
                 return "redirect:/web/alunos/" + alunoId + "/treinos";
             }
 
             treinoService.deleteTreino(treinoId);
-            redirectAttributes.addFlashAttribute("mensagem", "Treino deletado com sucesso!");
+            redirectAttributes.addFlashAttribute("successMessage", "Treino deletado com sucesso!"); // <-- CORRIGIDO
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("erro",
+            redirectAttributes.addFlashAttribute("errorMessage", // <-- CORRIGIDO
                     "Erro ao deletar treino: " + e.getMessage());
         }
         return "redirect:/web/alunos/" + alunoId + "/treinos";
+    }
+    @GetMapping("/imprimir-pdf/{treinoId}") // URL diferente para não conflitar com a de .txt
+    public ResponseEntity<byte[]> imprimirTreinoPdf(@PathVariable Long alunoId, @PathVariable Long treinoId) {
+        logger.info("Requisição para imprimir PDF do treino ID: {} do aluno ID: {}", treinoId, alunoId);
+
+        Optional<AlunoResponseDTO> alunoOpt = alunoService.getAlunoById(alunoId);
+        Optional<TreinoResponseDTO> treinoOpt = treinoService.getTreinoByIdAndAlunoId(treinoId, alunoId);
+
+        if (alunoOpt.isEmpty() || treinoOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        AlunoResponseDTO aluno = alunoOpt.get();
+        TreinoResponseDTO treino = treinoOpt.get();
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            Document document = new Document(PageSize.A4);
+            PdfWriter.getInstance(document, baos);
+            document.open();
+
+            // Estilos de Fonte
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
+            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
+            Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
+            Font tableHeaderFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+            Font tableBodyFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+
+            // Título
+            document.add(new Paragraph("Ficha de Treino - GymTime", titleFont));
+            document.add(new Paragraph(" ")); // Linha em branco
+
+            // Dados do Aluno e Treino
+            document.add(new Paragraph("Aluno: " + aluno.nome(), normalFont));
+            document.add(new Paragraph("Treino: " + treino.nome(), normalFont));
+            if (treino.descricao() != null && !treino.descricao().isBlank()) {
+                document.add(new Paragraph("Descrição: " + treino.descricao(), normalFont));
+            }
+            document.add(new Paragraph(" "));
+
+            // Tabela de Exercícios
+            document.add(new Paragraph("Exercícios", headerFont));
+            document.add(new Paragraph(" "));
+
+            PdfPTable table = new PdfPTable(2); // 2 colunas
+            table.setWidthPercentage(100);
+            table.setWidths(new float[]{3f, 1.5f}); // Largura das colunas
+
+            // Cabeçalho da Tabela
+            PdfPCell cell1 = new PdfPCell(new Phrase("Exercício", tableHeaderFont));
+            PdfPCell cell2 = new PdfPCell(new Phrase("Séries/Repetições", tableHeaderFont));
+            table.addCell(cell1);
+            table.addCell(cell2);
+
+            // Corpo da Tabela
+            if (treino.exercicios() != null) {
+                for (var ex : treino.exercicios()) {
+                    table.addCell(new Phrase(ex.nomeExercicio(), tableBodyFont));
+                    table.addCell(new Phrase(ex.seriesRepeticoes() != null ? ex.seriesRepeticoes() : "-", tableBodyFont));
+                }
+            }
+
+            document.add(table);
+            document.close();
+
+            // Configura os Headers da resposta
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=treino_" + aluno.nome().replace(" ", "_") + ".pdf");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                    .body(baos.toByteArray());
+
+        } catch (DocumentException | IOException e) {
+            logger.error("Erro ao gerar PDF: ", e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }
