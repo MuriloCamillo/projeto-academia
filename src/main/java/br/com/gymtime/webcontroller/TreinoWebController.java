@@ -242,15 +242,15 @@ public class TreinoWebController {
             // Verificar se o treino pertence ao aluno antes de deletar
             Optional<TreinoResponseDTO> treino = treinoService.getTreinoByIdAndAlunoId(treinoId, alunoId);
             if (treino.isEmpty()) {
-                redirectAttributes.addFlashAttribute("erro",
+                redirectAttributes.addFlashAttribute("errorMessage", // <-- CORRIGIDO
                         "Treino não encontrado ou não pertence a este aluno.");
                 return "redirect:/web/alunos/" + alunoId + "/treinos";
             }
 
             treinoService.deleteTreino(treinoId);
-            redirectAttributes.addFlashAttribute("mensagem", "Treino deletado com sucesso!");
+            redirectAttributes.addFlashAttribute("successMessage", "Treino deletado com sucesso!"); // <-- CORRIGIDO
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("erro",
+            redirectAttributes.addFlashAttribute("errorMessage", // <-- CORRIGIDO
                     "Erro ao deletar treino: " + e.getMessage());
         }
         return "redirect:/web/alunos/" + alunoId + "/treinos";

@@ -17,7 +17,8 @@
 </div>
 
 <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
-<div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div> <a th:if="${aluno != null}" th:href="@{/web/alunos/{alunoId}/treinos/novo(alunoId=${aluno.id})}" class="add-button">Novo Treino</a>
+<div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
+<a th:if="${aluno != null}" th:href="@{/web/alunos/{alunoId}/treinos/novo(alunoId=${aluno.id})}" class="add-button">Novo Treino</a>
 
 <div th:if="${aluno != null}">
   <table th:if="${not #lists.isEmpty(treinos)}">
@@ -32,20 +33,20 @@
     </tr>
     </thead>
     <tbody>
-    <tr th:each="treino : ${treinos}"> <td th:text="${treino.id}"></td>
+    <tr th:each="treino : ${treinos}">
+      <td th:text="${treino.id}"></td>
       <td th:text="${treino.nome}"></td>
       <td th:text="${treino.descricao ?: '-'}"></td>
       <td class="exercicios-cell">
-        <!-- Lista de exercícios -->
         <ul class="exercicios-lista" th:if="${treino.exercicios != null && !#lists.isEmpty(treino.exercicios)}">
           <li class="exercicio-item" th:each="exercicio : ${treino.exercicios}">
-            <span th:text="${exercicio.nomeExercicio}"></span>
-            <span th:text="' - ' + ${exercicio.seriesRepeticoes}"></span>
+            <span class="nome-exercicio" th:text="${exercicio.nomeExercicio}"></span>
+            <span class="series-repeticoes" th:text="' - ' + ${exercicio.seriesRepeticoes}"></span>
           </li>
         </ul>
         <span th:if="${treino.exercicios == null || #lists.isEmpty(treino.exercicios)}">
-                            Nenhum exercício cadastrado
-                        </span>
+          Nenhum exercício cadastrado
+        </span>
       </td>
       <td th:text="${treino.dataCriacao != null ? #temporals.format(treino.dataCriacao, 'dd/MM/yyyy') : '-'}"></td>
       <td class="actions">
