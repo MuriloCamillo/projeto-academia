@@ -10,8 +10,8 @@
   <a th:href="@{/web/alunos}">Voltar para Lista de Alunos</a>
 </div>
 
-<h1 th:if="${aluno != null}" th:text="'Treinos de ' + ${aluno.nome}">Treinos</h1>
-<h3 th:if="${aluno != null}" th:text="'ID do Aluno: ' + ${aluno.id}"></h3>
+<h1 th:if="${aluno != null}" th:text="'Treinos do aluno ' + ${aluno.nome}">Treinos</h1>
+<h3 th:if="${aluno != null}" th:text="'Código do Aluno: ' + ${aluno.id}"></h3>
 <div th:if="${aluno == null}">
   <h1>Aluno não especificado ou não encontrado.</h1>
 </div>
