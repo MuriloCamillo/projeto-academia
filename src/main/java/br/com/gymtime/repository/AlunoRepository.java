@@ -7,7 +7,10 @@ import java.util.Optional;
 
 @Repository
 public interface AlunoRepository extends JpaRepository<Aluno, Long> {
-    // Spring Data JPA infere a query pelo nome do metodo
     Optional<Aluno> findByEmail(String email);
     boolean existsByEmail(String email);
+
+    // Novos métodos para CPF
+    Optional<Aluno> findByCpf(String cpf);
+    boolean existsByCpf(String cpf);
 }

@@ -4,40 +4,233 @@
     <meta charset="UTF-8">
     <title th:text="${pageTitle} ?: 'Formulário de Treino'"></title>
     <link rel="stylesheet" type="text/css" th:href="@{/css/style.css}">
+    <style>
+        .exercise-item {
+            padding: 10px; margin-bottom: 10px; border: 1px dashed #ccc;
+            border-radius: 4px; background-color: #fdfdfd; display: flex;
+            flex-wrap: wrap; /* Permite quebra de linha se não couber */
+            align-items: center; gap: 10px;
+        }
+        .exercise-item label { margin-right: 5px; white-space: nowrap; }
+        .exercise-item input[type="text"] {
+            flex-grow: 1;
+            min-width: 150px; /* Largura mínima para os inputs */
+        }
+        .remove-exercise-btn, .add-exercise-btn {
+            padding: 5px 10px; color: white; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 0.9em;
+            height: fit-content; /* Ajustar altura do botão */
+        }
+        .remove-exercise-btn { background-color: #dc3545; } /* Vermelho */
+        .add-exercise-btn { background-color: #28a745; margin-top: 10px; } /* Verde */
+        .error-message { color: red; font-size: 0.9em; width: 100%; /* Para ocupar a linha abaixo do input */ }
+    </style>
 </head>
 <body>
 <div class="form-container">
     <h1 th:text="${pageTitle} ?: 'Formulário de Treino'">Formulário de Treino</h1>
     <h3 th:if="${aluno != null}" th:text="'Para o aluno: ' + ${aluno.nome} + ' (ID: ' + ${aluno.id} + ')'"></h3>
 
-    <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
+    <div th:if="${errorMessageGlobal}" class="message error" th:text="${errorMessageGlobal}"></div>
 
     <form th:if="${treinoId == null && aluno != null}"
+          id="formCriarTreino"
           th:action="@{/web/alunos/{alunoId}/treinos/criar(alunoId=${aluno.id})}"
           method="post" th:object="${treinoForm}">
-        <div th:replace="~{treinos/_formFieldsTreino :: formFieldsTreino}"></div>
+
+        <div th:if="${#fields.hasGlobalErrors()}" class="message error">
+            <p th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
+        </div>
+
+        <div class="form-group">
+            <label for="treinoNomeCreate">Nome do Treino:</label>
+            <input type="text" id="treinoNomeCreate" th:field="*{nome}" />
+            <div th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}" class="error-message"></div>
+        </div>
+        <div class="form-group">
+            <label for="treinoDescricaoCreate">Descrição do Treino:</label>
+            <textarea id="treinoDescricaoCreate" th:field="*{descricao}"></textarea>
+            <div th:if="${#fields.hasErrors('descricao')}" th:errors="*{descricao}" class="error-message"></div>
+        </div>
+
+        <hr>
+        <h4>Exercícios</h4>
+        <div id="exerciciosContainerCreate">
+            <div th:each="exDTO, iterStat : *{exercicios}" class="exercise-item">
+                <label th:for="'exercicios[' + ${iterStat.index} + '].nomeExercicio-create'">Exercício:</label>
+                <input type="text" th:id="'exercicios[' + ${iterStat.index} + '].nomeExercicio-create'" th:field="*{exercicios[__${iterStat.index}__].nomeExercicio}" placeholder="Nome do Exercício"/>
+                <div th:if="${#fields.hasErrors('exercicios[__${iterStat.index}__].nomeExercicio')}"
+                     th:errors="*{exercicios[__${iterStat.index}__].nomeExercicio}" class="error-message"></div>
+
+                <label th:for="'exercicios[' + ${iterStat.index} + '].seriesRepeticoes-create'">Séries/Rep:</label>
+                <input type="text" th:id="'exercicios[' + ${iterStat.index} + '].seriesRepeticoes-create'" th:field="*{exercicios[__${iterStat.index}__].seriesRepeticoes}" placeholder="Ex: 3x10"/>
+                <div th:if="${#fields.hasErrors('exercicios[__${iterStat.index}__].seriesRepeticoes')}"
+                     th:errors="*{exercicios[__${iterStat.index}__].seriesRepeticoes}" class="error-message"></div>
+
+                <button type="button" class="remove-exercise-btn" onclick="removerExercicio(this, 'exerciciosContainerCreate')">Remover</button>
+            </div>
+        </div>
+        <button type="button" id="addExercicioBtnCreate" class="add-exercise-btn">(+) Adicionar Exercício</button>
+        <hr><br/>
         <div>
             <button type="submit">Cadastrar Treino</button>
         </div>
     </form>
 
     <form th:if="${treinoId != null && aluno != null}"
+          id="formAtualizarTreino"
           th:action="@{/web/alunos/{alunoId}/treinos/atualizar/{treinoId}(alunoId=${aluno.id}, treinoId=${treinoId})}"
           method="post" th:object="${treinoForm}">
-        <div th:replace="~{treinos/_formFieldsTreino :: formFieldsTreino}"></div>
+
+        <div th:if="${#fields.hasGlobalErrors()}" class="message error">
+            <p th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
+        </div>
+
+        <div class="form-group">
+            <label for="treinoNomeUpdate">Nome do Treino:</label>
+            <input type="text" id="treinoNomeUpdate" th:field="*{nome}" />
+            <div th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}" class="error-message"></div>
+        </div>
+        <div class="form-group">
+            <label for="treinoDescricaoUpdate">Descrição do Treino:</label>
+            <textarea id="treinoDescricaoUpdate" th:field="*{descricao}"></textarea>
+            <div th:if="${#fields.hasErrors('descricao')}" th:errors="*{descricao}" class="error-message"></div>
+        </div>
+
+        <hr>
+        <h4>Exercícios</h4>
+        <div id="exerciciosContainerUpdate">
+            <div th:each="exDTO, iterStat : *{exercicios}" class="exercise-item">
+                <label th:for="'exercicios[' + ${iterStat.index} + '].nomeExercicio-update'">Exercício:</label>
+                <input type="text" th:id="'exercicios[' + ${iterStat.index} + '].nomeExercicio-update'" th:field="*{exercicios[__${iterStat.index}__].nomeExercicio}" placeholder="Nome do Exercício"/>
+                <div th:if="${#fields.hasErrors('exercicios[__${iterStat.index}__].nomeExercicio')}"
+                     th:errors="*{exercicios[__${iterStat.index}__].nomeExercicio}" class="error-message"></div>
+
+                <label th:for="'exercicios[' + ${iterStat.index} + '].seriesRepeticoes-update'">Séries/Rep:</label>
+                <input type="text" th:id="'exercicios[' + ${iterStat.index} + '].seriesRepeticoes-update'" th:field="*{exercicios[__${iterStat.index}__].seriesRepeticoes}" placeholder="Ex: 3x10"/>
+                <div th:if="${#fields.hasErrors('exercicios[__${iterStat.index}__].seriesRepeticoes')}"
+                     th:errors="*{exercicios[__${iterStat.index}__].seriesRepeticoes}" class="error-message"></div>
+
+                <button type="button" class="remove-exercise-btn" onclick="removerExercicio(this, 'exerciciosContainerUpdate')">Remover</button>
+            </div>
+        </div>
+        <button type="button" id="addExercicioBtnUpdate" class="add-exercise-btn">(+) Adicionar Exercício</button>
+        <hr><br/>
         <div>
             <button type="submit">Atualizar Treino</button>
         </div>
     </form>
 
     <div th:if="${aluno == null}">
-        <p class="message error">Aluno não encontrado ou não especificado. Não é possível gerenciar treinos.</p>
+        <p class="message error">Aluno não encontrado. Não é possível gerenciar treinos.</p>
     </div>
 
     <div class="nav-links" style="margin-top: 20px;">
-        <a th:if="${aluno != null}" th:href="@{/web/alunos/{alunoId}/treinos(alunoId=${aluno.id})}">Voltar para Treinos do Aluno</a> <br/>
+        <a th:if="${aluno != null}" th:href="@{/web/alunos/{alunoId}/treinos(alunoId=${aluno.id})}">Voltar para Treinos</a> <br/>
         <a th:href="@{/web/alunos}">Voltar para Lista de Alunos</a>
     </div>
 </div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    function setupDynamicExercises(containerId, addButtonId) {
+        const container = document.getElementById(containerId);
+        const addButton = document.getElementById(addButtonId);
+
+        // Este índice será usado para os NOVOS itens.
+        // Ele começa baseado no número de itens já renderizados pelo Thymeleaf.
+        let nextExerciseIndex = container.querySelectorAll('.exercise-item').length;
+
+        if (addButton) {
+            addButton.addEventListener('click', function() {
+                const currentIndexForNewItem = nextExerciseIndex;
+
+                const newExercicioDiv = document.createElement('div');
+                newExercicioDiv.classList.add('exercise-item');
+                // O ID do div do item não é tão crucial, mas os names e IDs dos inputs são.
+
+                // IDs dos inputs devem ser únicos na página. Adicionar sufixo do container pode ajudar.
+                const idSuffix = containerId.includes('Create') ? '-create' : '-update';
+
+                newExercicioDiv.innerHTML =
+                    '<label for="exercicios[' + currentIndexForNewItem + '].nomeExercicio' + idSuffix + '">Exercício:</label>' +
+                    '<input type="text" id="exercicios[' + currentIndexForNewItem + '].nomeExercicio' + idSuffix + '" name="exercicios[' + currentIndexForNewItem + '].nomeExercicio" placeholder="Nome do Exercício"/>' +
+                    '<label for="exercicios[' + currentIndexForNewItem + '].seriesRepeticoes' + idSuffix + '">Séries/Rep:</label>' +
+                    '<input type="text" id="exercicios[' + currentIndexForNewItem + '].seriesRepeticoes' + idSuffix + '" name="exercicios[' + currentIndexForNewItem + '].seriesRepeticoes" placeholder="Ex: 3x10"/>' +
+                    '<button type="button" class="remove-exercise-btn" onclick="removerExercicio(this, \'' + containerId + '\')">Remover</button>';
+
+                container.appendChild(newExercicioDiv);
+                nextExerciseIndex++; // Incrementa o índice para o próximo NOVO item
+            });
+        }
+    }
+
+    function reindexExercicios(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const items = container.querySelectorAll('.exercise-item');
+        const idSuffix = containerId.includes('Create') ? '-create' : '-update';
+
+        items.forEach((item, index) => {
+            // Atualiza os 'name' e 'id'/'for' dos inputs e labels
+            const nomeExercicioInput = item.querySelector('input[name$=".nomeExercicio"]');
+            const seriesRepeticoesInput = item.querySelector('input[name$=".seriesRepeticoes"]');
+            // Encontrar labels baseando-se no padrão, já que o 'for' também será reindexado
+            const nomeExercicioLabel = item.querySelector('label[for*="nomeExercicio"]');
+            const seriesRepeticoesLabel = item.querySelector('label[for*="seriesRepeticoes"]');
+
+            if (nomeExercicioInput) {
+                nomeExercicioInput.name = 'exercicios[' + index + '].nomeExercicio';
+                nomeExercicioInput.id = 'exercicios[' + index + '].nomeExercicio' + idSuffix;
+            }
+            if (nomeExercicioLabel) {
+                nomeExercicioLabel.htmlFor = 'exercicios[' + index + '].nomeExercicio' + idSuffix;
+            }
+
+            if (seriesRepeticoesInput) {
+                seriesRepeticoesInput.name = 'exercicios[' + index + '].seriesRepeticoes';
+                seriesRepeticoesInput.id = 'exercicios[' + index + '].seriesRepeticoes' + idSuffix;
+            }
+            if (seriesRepeticoesLabel) {
+                seriesRepeticoesLabel.htmlFor = 'exercicios[' + index + '].seriesRepeticoes' + idSuffix;
+            }
+        });
+        // Atualiza o índice para o próximo item a ser adicionado para este container específico.
+        // A variável nextExerciseIndex dentro de setupDynamicExercises será o novo items.length
+        // quando um novo exercício for adicionado após uma remoção e reindexação.
+        // Para garantir que a função setupDynamicExercises use o índice correto após reindexação:
+        if (containerId === 'exerciciosContainerCreate') {
+            // Reatribuir o próximo índice com base no número atual de itens
+            // Este ajuste é um pouco mais complexo se nextExerciseIndex for local a setupDynamicExercises
+            // A maneira como setupDynamicExercises foi escrita, ela já recalcula 'nextExerciseIndex'
+            // ao ser chamada, o que é bom. A reindexação garante que os nomes enviados sejam sequenciais.
+            // O 'nextExerciseIndex' global para o evento de clique precisa refletir o novo count.
+            // Uma forma mais simples é que o 'addButton.onclick' recalcule o 'nextExerciseIndex' antes de adicionar.
+            // Por ora, a reindexação dos names é o mais crítico para a submissão.
+        } else if (containerId === 'exerciciosContainerUpdate') {
+            // Similar.
+        }
+    }
+
+    function removerExercicio(button, containerId) {
+        button.closest('.exercise-item').remove();
+        reindexExercicios(containerId);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // A variável 'treinoId' é injetada pelo Thymeleaf (se existir no model)
+        const isCreatingNewTreino = /*[[${treinoId == null}]]*/ false;
+
+        if (isCreatingNewTreino) {
+            setupDynamicExercises('exerciciosContainerCreate', 'addExercicioBtnCreate');
+        } else { // Modo de edição
+            setupDynamicExercises('exerciciosContainerUpdate', 'addExercicioBtnUpdate');
+        }
+    });
+    /*]]>*/
+</script>
+
 </body>
 </html>

@@ -20,23 +20,26 @@
         <th>Nome</th>
         <th>Email</th>
         <th>Telefone</th>
+        <th>CPF</th>
         <th>Ações</th>
     </tr>
     </thead>
     <tbody>
-    <tr th:each="aluno : ${alunos}">
+    <tr th:each="aluno : ${alunos}"> <!-- aluno aqui é AlunoResponseDTO -->
         <td th:text="${aluno.id}"></td>
         <td th:text="${aluno.nome}"></td>
         <td th:text="${aluno.email}"></td>
-        <td th:text="${aluno.telefone ?: '-'}"></td> <td class="actions">
-        <a th:href="@{/web/alunos/editar/{id}(id=${aluno.id})}" class="edit-link">Editar</a>
-        <a th:href="@{/web/alunos/deletar/{id}(id=${aluno.id})}" class="delete-link"
-           onclick="return confirm('Tem certeza que deseja deletar este aluno?');">Deletar</a>
-        <a th:href="@{/web/alunos/{alunoId}/treinos(alunoId=${aluno.id})}" class="view-link">Ver Treinos</a>
-    </td>
+        <td th:text="${aluno.getFormattedTelefone()} ?: '-'"></td> <!-- Usa método formatado -->
+        <td th:text="${aluno.getFormattedCpf()}"></td> <!-- Usa método formatado -->
+        <td class="actions">
+            <a th:href="@{/web/alunos/editar/{id}(id=${aluno.id})}" class="edit-link">Editar</a>
+            <a th:href="@{/web/alunos/deletar/{id}(id=${aluno.id})}" class="delete-link"
+               onclick="return confirm('Tem certeza que deseja deletar este aluno?');">Deletar</a>
+            <a th:href="@{/web/alunos/{alunoId}/treinos(alunoId=${aluno.id})}" class="view-link">Ver Treinos</a>
+        </td>
     </tr>
     <tr th:if="${#lists.isEmpty(alunos)}">
-        <td colspan="5">Nenhum aluno cadastrado.</td>
+        <td colspan="6">Nenhum aluno cadastrado.</td>
     </tr>
     </tbody>
 </table>

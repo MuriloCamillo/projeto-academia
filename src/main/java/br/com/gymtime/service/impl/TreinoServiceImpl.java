@@ -1,17 +1,22 @@
 package br.com.gymtime.service.impl;
 
-import br.com.gymtime.dto.TreinoDTO;
+import br.com.gymtime.dto.ExercicioCreateDTO;
+import br.com.gymtime.dto.ExercicioResponseDTO;
+import br.com.gymtime.dto.TreinoCreateDTO;
+import br.com.gymtime.dto.TreinoResponseDTO;
+import br.com.gymtime.dto.TreinoUpdateDTO;
 import br.com.gymtime.exception.ResourceNotFoundException;
 import br.com.gymtime.model.Aluno;
+import br.com.gymtime.model.Exercicio;
 import br.com.gymtime.model.Treino;
 import br.com.gymtime.repository.AlunoRepository;
 import br.com.gymtime.repository.TreinoRepository;
 import br.com.gymtime.service.TreinoService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -20,7 +25,7 @@ import java.util.stream.Collectors;
 public class TreinoServiceImpl implements TreinoService {
 
     private final TreinoRepository treinoRepository;
-    private final AlunoRepository alunoRepository; // Necessário para associar o treino a um aluno
+    private final AlunoRepository alunoRepository;
 
     @Autowired
     public TreinoServiceImpl(TreinoRepository treinoRepository, AlunoRepository alunoRepository) {
@@ -28,79 +33,124 @@ public class TreinoServiceImpl implements TreinoService {
         this.alunoRepository = alunoRepository;
     }
 
-    // Método de conversão Entidade para DTO
-    private TreinoDTO convertToTreinoDTO(Treino treino) {
+    private ExercicioResponseDTO convertToExercicioResponseDTO(Exercicio exercicio) {
+        if (exercicio == null) return null;
+        return new ExercicioResponseDTO(
+                exercicio.getId(),
+                exercicio.getNomeExercicio(),
+                exercicio.getSeriesRepeticoes()
+        );
+    }
+
+    private TreinoResponseDTO convertToTreinoResponseDTO(Treino treino) {
         if (treino == null) return null;
-        return new TreinoDTO(
+
+        List<ExercicioResponseDTO> exercicioDTOs = Collections.emptyList();
+        if (treino.getExercicios() != null) {
+            exercicioDTOs = treino.getExercicios().stream()
+                    .map(this::convertToExercicioResponseDTO)
+                    .collect(Collectors.toList());
+        }
+
+        return new TreinoResponseDTO(
                 treino.getId(),
                 treino.getNome(),
                 treino.getDescricao(),
                 treino.getDataCriacao(),
                 treino.getDataAtualizacao(),
-                treino.getAluno() != null ? treino.getAluno().getId() : null
+                treino.getAluno() != null ? treino.getAluno().getId() : null,
+                exercicioDTOs
         );
     }
 
     @Transactional
     @Override
-    public TreinoDTO createTreino(TreinoDTO.TreinoCreateDTO treinoCreateDTO) {
+    public TreinoResponseDTO createTreino(TreinoCreateDTO treinoCreateDTO) {
         Aluno aluno = alunoRepository.findById(treinoCreateDTO.alunoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Aluno não encontrado com ID: " + treinoCreateDTO.alunoId() + " para associar ao treino."));
 
         Treino treino = new Treino();
-        // Copia nome e descrição do DTO. Não copia alunoId diretamente para o campo aluno.
         treino.setNome(treinoCreateDTO.nome());
         treino.setDescricao(treinoCreateDTO.descricao());
-        treino.setAluno(aluno); // Associa o aluno encontrado
+        treino.setAluno(aluno);
+
+        if (treinoCreateDTO.exercicios() != null) {
+            for (ExercicioCreateDTO exDTO : treinoCreateDTO.exercicios()) {
+                // Usar getters agora que ExercicioCreateDTO é uma classe
+                if (exDTO.getNomeExercicio() != null && !exDTO.getNomeExercicio().isBlank()) {
+                    Exercicio exercicio = new Exercicio(exDTO.getNomeExercicio(), exDTO.getSeriesRepeticoes());
+                    treino.addExercicio(exercicio);
+                }
+            }
+        }
 
         Treino savedTreino = treinoRepository.save(treino);
-        return convertToTreinoDTO(savedTreino);
+        return convertToTreinoResponseDTO(savedTreino);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public List<TreinoDTO> getTreinosByAlunoId(Long alunoId) {
+    public List<TreinoResponseDTO> getTreinosByAlunoId(Long alunoId) {
         if (!alunoRepository.existsById(alunoId)) {
             throw new ResourceNotFoundException("Aluno não encontrado com ID: " + alunoId);
         }
         return treinoRepository.findByAlunoId(alunoId).stream()
-                .map(this::convertToTreinoDTO)
+                .map(this::convertToTreinoResponseDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     @Override
-    public Optional<TreinoDTO> getTreinoById(Long id) {
+    public Optional<TreinoResponseDTO> getTreinoById(Long id) {
         return treinoRepository.findById(id)
-                .map(this::convertToTreinoDTO);
+                .map(this::convertToTreinoResponseDTO);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Optional<TreinoResponseDTO> getTreinoByIdAndAlunoId(Long treinoId, Long alunoId) {
+        // Primeiro, verifica se o aluno existe para evitar uma busca desnecessária de treino
+        if (!alunoRepository.existsById(alunoId)) {
+            throw new ResourceNotFoundException("Aluno não encontrado com ID: " + alunoId);
+        }
+        return treinoRepository.findById(treinoId)
+                .filter(treino -> treino.getAluno() != null && treino.getAluno().getId().equals(alunoId))
+                .map(this::convertToTreinoResponseDTO);
     }
 
     @Transactional
     @Override
-    public TreinoDTO updateTreino(Long id, TreinoDTO.TreinoUpdateDTO treinoUpdateDTO) {
+    public TreinoResponseDTO updateTreino(Long id, TreinoUpdateDTO treinoUpdateDTO) {
         Treino treino = treinoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Treino não encontrado com ID: " + id));
 
-        // Atualiza apenas os campos não nulos do DTO
         if (treinoUpdateDTO.nome() != null) {
             treino.setNome(treinoUpdateDTO.nome());
         }
         if (treinoUpdateDTO.descricao() != null) {
             treino.setDescricao(treinoUpdateDTO.descricao());
         }
-        // Geralmente não se muda o aluno de um treino existente, mas se fosse necessário,
-        // a lógica para buscar o novo aluno e associá-lo seria aqui.
+
+        treino.getExercicios().clear(); // Limpa os exercícios existentes (orphanRemoval=true cuidará da exclusão)
+        if (treinoUpdateDTO.exercicios() != null) {
+            for (ExercicioCreateDTO exDTO : treinoUpdateDTO.exercicios()) {
+                // Usar getters agora que ExercicioCreateDTO é uma classe
+                if (exDTO.getNomeExercicio() != null && !exDTO.getNomeExercicio().isBlank()) {
+                    Exercicio exercicio = new Exercicio(exDTO.getNomeExercicio(), exDTO.getSeriesRepeticoes());
+                    treino.addExercicio(exercicio);
+                }
+            }
+        }
 
         Treino updatedTreino = treinoRepository.save(treino);
-        return convertToTreinoDTO(updatedTreino);
+        return convertToTreinoResponseDTO(updatedTreino);
     }
 
     @Transactional
     @Override
     public void deleteTreino(Long id) {
-        if (!treinoRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Treino não encontrado com ID: " + id);
-        }
-        treinoRepository.deleteById(id);
+        Treino treino = treinoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Treino não encontrado com ID: " + id));
+        treinoRepository.delete(treino); // Cascade e orphanRemoval cuidarão dos exercícios
     }
 }
