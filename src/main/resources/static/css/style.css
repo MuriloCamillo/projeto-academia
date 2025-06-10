@@ -201,3 +201,57 @@ button[type="submit"] { background-color: #28a745; }
 .exercicio-item .series-repeticoes {
     color: #555; /* Cor mais suave para as séries/repetições */
 }
+/* Adicione no final do arquivo */
+.actions .print-link {
+    background-color: #6c757d; /* Cinza */
+    color: white;
+}
+
+/* Estilos para o formulário de treino (adicionados) */
+.exercise-item {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    background-color: #fdfdfd;
+    display: flex;
+    flex-wrap: wrap; /* Permite quebra de linha se não couber */
+    align-items: center;
+    gap: 10px;
+}
+
+.exercise-item label {
+    margin-right: 5px;
+    white-space: nowrap;
+}
+
+.exercise-item input[type="text"] {
+    flex-grow: 1;
+    min-width: 150px; /* Largura mínima para os inputs */
+}
+
+.remove-exercise-btn, .add-exercise-btn {
+    padding: 5px 10px;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    height: fit-content; /* Ajustar altura do botão */
+}
+
+.remove-exercise-btn {
+    background-color: #dc3545; /* Vermelho */
+}
+
+.add-exercise-btn {
+    background-color: #28a745; /* Verde */
+    margin-top: 10px;
+}
+
+/* A classe .error-message já pode existir, mas certifique-se de que tenha estes estilos */
+.error-message {
+    color: red;
+    font-size: 0.9em;
+    width: 100%; /* Para ocupar a linha abaixo do input */
+}

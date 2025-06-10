@@ -4,27 +4,8 @@
     <meta charset="UTF-8">
     <title th:text="${pageTitle} ?: 'Formulário de Treino'"></title>
     <link rel="stylesheet" type="text/css" th:href="@{/css/style.css}">
-    <style>
-        .exercise-item {
-            padding: 10px; margin-bottom: 10px; border: 1px dashed #ccc;
-            border-radius: 4px; background-color: #fdfdfd; display: flex;
-            flex-wrap: wrap; /* Permite quebra de linha se não couber */
-            align-items: center; gap: 10px;
-        }
-        .exercise-item label { margin-right: 5px; white-space: nowrap; }
-        .exercise-item input[type="text"] {
-            flex-grow: 1;
-            min-width: 150px; /* Largura mínima para os inputs */
-        }
-        .remove-exercise-btn, .add-exercise-btn {
-            padding: 5px 10px; color: white; border: none;
-            border-radius: 4px; cursor: pointer; font-size: 0.9em;
-            height: fit-content; /* Ajustar altura do botão */
-        }
-        .remove-exercise-btn { background-color: #dc3545; } /* Vermelho */
-        .add-exercise-btn { background-color: #28a745; margin-top: 10px; } /* Verde */
-        .error-message { color: red; font-size: 0.9em; width: 100%; /* Para ocupar a linha abaixo do input */ }
-    </style>
+    <!-- Link para os ícones do Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 <div class="form-container">
@@ -33,11 +14,13 @@
 
     <div th:if="${errorMessageGlobal}" class="message error" th:text="${errorMessageGlobal}"></div>
 
+    <!-- Formulário de Criação -->
     <form th:if="${treinoId == null && aluno != null}"
           id="formCriarTreino"
           th:action="@{/web/alunos/{alunoId}/treinos/criar(alunoId=${aluno.id})}"
           method="post" th:object="${treinoForm}">
 
+        <!-- Campos do formulário de criação... -->
         <div th:if="${#fields.hasGlobalErrors()}" class="message error">
             <p th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
         </div>
@@ -51,36 +34,33 @@
             <textarea id="treinoDescricaoCreate" th:field="*{descricao}"></textarea>
             <div th:if="${#fields.hasErrors('descricao')}" th:errors="*{descricao}" class="error-message"></div>
         </div>
-
         <hr>
         <h4>Exercícios</h4>
         <div id="exerciciosContainerCreate">
             <div th:each="exDTO, iterStat : *{exercicios}" class="exercise-item">
                 <label th:for="'exercicios[' + ${iterStat.index} + '].nomeExercicio-create'">Exercício:</label>
                 <input type="text" th:id="'exercicios[' + ${iterStat.index} + '].nomeExercicio-create'" th:field="*{exercicios[__${iterStat.index}__].nomeExercicio}" placeholder="Nome do Exercício"/>
-                <div th:if="${#fields.hasErrors('exercicios[__${iterStat.index}__].nomeExercicio')}"
-                     th:errors="*{exercicios[__${iterStat.index}__].nomeExercicio}" class="error-message"></div>
-
+                <div th:if="${#fields.hasErrors('exercicios[__${iterStat.index}__].nomeExercicio')}" th:errors="*{exercicios[__${iterStat.index}__].nomeExercicio}" class="error-message"></div>
                 <label th:for="'exercicios[' + ${iterStat.index} + '].seriesRepeticoes-create'">Séries/Rep:</label>
                 <input type="text" th:id="'exercicios[' + ${iterStat.index} + '].seriesRepeticoes-create'" th:field="*{exercicios[__${iterStat.index}__].seriesRepeticoes}" placeholder="Ex: 3x10"/>
-                <div th:if="${#fields.hasErrors('exercicios[__${iterStat.index}__].seriesRepeticoes')}"
-                     th:errors="*{exercicios[__${iterStat.index}__].seriesRepeticoes}" class="error-message"></div>
-
-                <button type="button" class="remove-exercise-btn">Remover</button>
+                <div th:if="${#fields.hasErrors('exercicios[__${iterStat.index}__].seriesRepeticoes')}" th:errors="*{exercicios[__${iterStat.index}__].seriesRepeticoes}" class="error-message"></div>
+                <button type="button" class="remove-exercise-btn"><i class="fa-solid fa-trash-can"></i></button>
             </div>
         </div>
-        <button type="button" id="addExercicioBtnCreate" class="add-exercise-btn">(+) Adicionar Exercício</button>
+        <button type="button" id="addExercicioBtnCreate" class="add-exercise-btn"><i class="fa-solid fa-plus"></i> Adicionar Exercício</button>
         <hr><br/>
         <div>
-            <button type="submit">Cadastrar Treino</button>
+            <button type="submit"><i class="fa-solid fa-check"></i> Cadastrar Treino</button>
         </div>
     </form>
 
+    <!-- Formulário de Atualização -->
     <form th:if="${treinoId != null && aluno != null}"
           id="formAtualizarTreino"
           th:action="@{/web/alunos/{alunoId}/treinos/atualizar/{treinoId}(alunoId=${aluno.id}, treinoId=${treinoId})}"
           method="post" th:object="${treinoForm}">
 
+        <!-- Campos do formulário de atualização... -->
         <div th:if="${#fields.hasGlobalErrors()}" class="message error">
             <p th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
         </div>
@@ -94,28 +74,23 @@
             <textarea id="treinoDescricaoUpdate" th:field="*{descricao}"></textarea>
             <div th:if="${#fields.hasErrors('descricao')}" th:errors="*{descricao}" class="error-message"></div>
         </div>
-
         <hr>
         <h4>Exercícios</h4>
         <div id="exerciciosContainerUpdate">
             <div th:each="exDTO, iterStat : *{exercicios}" class="exercise-item">
                 <label th:for="'exercicios[' + ${iterStat.index} + '].nomeExercicio-update'">Exercício:</label>
                 <input type="text" th:id="'exercicios[' + ${iterStat.index} + '].nomeExercicio-update'" th:field="*{exercicios[__${iterStat.index}__].nomeExercicio}" placeholder="Nome do Exercício"/>
-                <div th:if="${#fields.hasErrors('exercicios[__${iterStat.index}__].nomeExercicio')}"
-                     th:errors="*{exercicios[__${iterStat.index}__].nomeExercicio}" class="error-message"></div>
-
+                <div th:if="${#fields.hasErrors('exercicios[__${iterStat.index}__].nomeExercicio')}" th:errors="*{exercicios[__${iterStat.index}__].nomeExercicio}" class="error-message"></div>
                 <label th:for="'exercicios[' + ${iterStat.index} + '].seriesRepeticoes-update'">Séries/Rep:</label>
                 <input type="text" th:id="'exercicios[' + ${iterStat.index} + '].seriesRepeticoes-update'" th:field="*{exercicios[__${iterStat.index}__].seriesRepeticoes}" placeholder="Ex: 3x10"/>
-                <div th:if="${#fields.hasErrors('exercicios[__${iterStat.index}__].seriesRepeticoes')}"
-                     th:errors="*{exercicios[__${iterStat.index}__].seriesRepeticoes}" class="error-message"></div>
-
-                <button type="button" class="remove-exercise-btn">Remover</button>
+                <div th:if="${#fields.hasErrors('exercicios[__${iterStat.index}__].seriesRepeticoes')}" th:errors="*{exercicios[__${iterStat.index}__].seriesRepeticoes}" class="error-message"></div>
+                <button type="button" class="remove-exercise-btn"><i class="fa-solid fa-trash-can"></i></button>
             </div>
         </div>
-        <button type="button" id="addExercicioBtnUpdate" class="add-exercise-btn">(+) Adicionar Exercício</button>
+        <button type="button" id="addExercicioBtnUpdate" class="add-exercise-btn"><i class="fa-solid fa-plus"></i> Adicionar Exercício</button>
         <hr><br/>
         <div>
-            <button type="submit">Atualizar Treino</button>
+            <button type="submit"><i class="fa-solid fa-check"></i> Atualizar Treino</button>
         </div>
     </form>
 
@@ -123,9 +98,16 @@
         <p class="message error">Aluno não encontrado. Não é possível gerenciar treinos.</p>
     </div>
 
-    <div class="nav-links" style="margin-top: 20px;">
-        <a th:if="${aluno != null}" th:href="@{/web/alunos/{alunoId}/treinos(alunoId=${aluno.id})}">Voltar para Treinos</a> <br/>
-        <a th:href="@{/web/alunos}">Voltar para Lista de Alunos</a>
+    <!-- SEÇÃO DE NAVEGAÇÃO MODIFICADA -->
+    <div class="form-footer-nav">
+        <a th:if="${aluno != null}" th:href="@{/web/alunos/{alunoId}/treinos(alunoId=${aluno.id})}" class="back-link">
+            <i class="fa-solid fa-clipboard-list"></i>
+            Voltar para Treinos
+        </a>
+        <a th:href="@{/web/alunos}" class="back-link">
+            <i class="fa-solid fa-users"></i>
+            Voltar para Lista de Alunos
+        </a>
     </div>
 </div>
 
