@@ -1,0 +1,40 @@
+<!--
+  Fragmento Thymeleaf que contém os campos comuns
+  para os formulários de criação e edição de Alunos.
+  Ele é reutilizado para evitar a duplicação de código.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="formFields">
+    <!-- Campo Nome -->
+    <div class="form-group">
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" th:field="*{nome}" />
+        <div th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}" class="error-message"></div>
+    </div>
+
+    <!-- Campo Email -->
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" th:field="*{email}" />
+        <div th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="error-message"></div>
+    </div>
+
+    <!-- Campo Telefone -->
+    <div class="form-group">
+        <label for="telefone">Telefone:</label>
+        <input type="tel" id="telefone" th:field="*{telefone}" placeholder="(XX) XXXXX-XXXX" maxlength="15" oninput="maskTelefone(event)"/>
+        <div th:if="${#fields.hasErrors('telefone')}" th:errors="*{telefone}" class="error-message"></div>
+    </div>
+
+    <!-- Campo CPF -->
+    <div class="form-group">
+        <label for="cpf">CPF:</label>
+        <input type="text" id="cpf" th:field="*{cpf}" placeholder="XXX.XXX.XXX-XX" maxlength="14" oninput="maskCpf(event)"/>
+        <div th:if="${#fields.hasErrors('cpf')}" th:errors="*{cpf}" class="error-message"></div>
+    </div>
+</div>
+
+</body>
+</html>

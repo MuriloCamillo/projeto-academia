@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="'Treinos de ' + (${aluno != null} ? ${aluno.nome} : 'Aluno Desconhecido')"></title>
+  <link rel="stylesheet" type="text/css" th:href="@{/css/style.css}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+<div class="page-container">
+  <!-- Cabeçalho com links de navegação e ação principal -->
+  <div class="header-actions">
+    <a th:href="@{/web/alunos}" class="back-link">
+      <i class="fa-solid fa-arrow-left"></i>
+      Voltar para Lista de Alunos
+    </a>
+    <a th:if="${aluno != null}" th:href="@{/web/alunos/{alunoId}/treinos/novo(alunoId=${aluno.id})}" class="add-button">
+      <i class="fa-solid fa-plus"></i> Novo Treino
+    </a>
+  </div>
+
+  <h1 th:if="${aluno != null}" th:text="'Treinos de ' + ${aluno.nome}">Treinos</h1>
+  <h3 th:if="${aluno != null}" th:text="'Código do Aluno: ' + ${aluno.id}"></h3>
+  <div th:if="${aluno == null}">
+    <h1>Aluno não especificado ou não encontrado.</h1>
+  </div>
+
+  <!-- Seção para exibir mensagens de feedback (sucesso ou erro) -->
+  <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
+  <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
+
+  <!-- Tabela é exibida apenas se a lista de treinos NÃO estiver vazia -->
+  <div th:if="${aluno != null}">
+    <table th:if="${not #lists.isEmpty(treinos)}">
+      <thead>
+      <tr>
+        <th>ID Treino</th>
+        <th>Nome</th>
+        <th>Descrição</th>
+        <th>Exercícios</th>
+        <th>Data Criação</th>
+        <th>Ações</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="treino : ${treinos}">
+        <td th:text="${treino.id}"></td>
+        <td th:text="${treino.nome}"></td>
+        <td th:text="${treino.descricao ?: '-'}"></td>
+        <td class="exercicios-cell">
+          <ul class="exercicios-lista" th:if="${treino.exercicios != null && !#lists.isEmpty(treino.exercicios)}">
+            <li class="exercicio-item" th:each="exercicio : ${treino.exercicios}">
+              <span class="nome-exercicio" th:text="${exercicio.nomeExercicio}"></span>
+              <span class="series-repeticoes" th:text="' - ' + ${exercicio.seriesRepeticoes}"></span>
+            </li>
+          </ul>
+          <span th:if="${treino.exercicios == null || #lists.isEmpty(treino.exercicios)}">
+              Nenhum exercício cadastrado
+            </span>
+        </td>
+        <td th:text="${treino.dataCriacao != null ? #temporals.format(treino.dataCriacao, 'dd/MM/yyyy') : '-'}"></td>
+        <td class="actions">
+          <a th:href="@{/web/alunos/{alunoId}/treinos/editar/{treinoId}(alunoId=${aluno.id}, treinoId=${treino.id})}" class="edit-link" title="Editar Treino">
+            <i class="fa-solid fa-pencil"></i>
+          </a>
+          <a th:href="@{/web/alunos/{alunoId}/treinos/deletar/{treinoId}(alunoId=${aluno.id}, treinoId=${treino.id})}" class="delete-link" title="Deletar Treino"
+             onclick="return confirm('Tem certeza que deseja deletar este treino?');">
+            <i class="fa-solid fa-trash-can"></i>
+          </a>
+          <a th:href="@{/web/alunos/{alunoId}/treinos/imprimir-pdf/{treinoId}(alunoId=${aluno.id}, treinoId=${treino.id})}" class="print-link" title="Imprimir Treino">
+            <i class="fa-solid fa-print"></i>
+          </a>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+    <div th:if="${#lists.isEmpty(treinos)}">
+      <p>Nenhum treino cadastrado para este aluno.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
