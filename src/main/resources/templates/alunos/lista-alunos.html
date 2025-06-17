@@ -8,6 +8,7 @@
 </head>
 <body>
 <div class="page-container">
+    <!-- Cabeçalho da página com título e botão de ação principal -->
     <div class="header-actions">
         <h1>Alunos Cadastrados</h1>
         <a th:href="@{/web/alunos/novo}" class="add-button">
@@ -15,10 +16,11 @@
         </a>
     </div>
 
-
+    <!-- Seção para exibir mensagens de feedback (sucesso ou erro) -->
     <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
     <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
 
+    <!-- Tabela para exibir a lista de alunos -->
     <table>
         <thead>
         <tr>

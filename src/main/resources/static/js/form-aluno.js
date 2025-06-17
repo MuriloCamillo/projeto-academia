@@ -1,5 +1,4 @@
-// Aplica a máscara apropriada aos campos CPF e Telefone quando a página carrega,
-// caso eles já possuam um valor (útil na tela de edição).
+// Aplica a máscara apropriada aos campos CPF e Telefone quando a página carrega
 document.addEventListener('DOMContentLoaded', function() {
     const cpfInput = document.getElementById('cpf');
     if (cpfInput && cpfInput.value) {

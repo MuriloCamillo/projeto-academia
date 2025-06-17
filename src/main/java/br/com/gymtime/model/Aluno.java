@@ -5,12 +5,22 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Representa a entidade Aluno no banco de dados.
+ * Mapeia a tabela "alunos" e contém as informações cadastrais de um aluno.
+ */
 @Entity
 @Table(name = "alunos")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Aluno {
 
     @Id
@@ -27,86 +37,94 @@ public class Aluno {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    // Telefone é opcional. Se preenchido, deve ter 10 ou 11 dígitos.
-    // O pattern ^([0-9]{10,11})?$ permite string vazia OU 10-11 dígitos.
-    // O @Size não é mais necessário aqui se o pattern já define o comprimento e permite vazio.
-    // Se você quiser manter o @Size, ele precisaria ser condicional ou o campo ser null.
-    // Para simplificar, vamos confiar no pattern e no setter que converte "" para null.
-    @Pattern(regexp = "^([0-9]{10,11})?$", message = "Telefone deve conter 10 ou 11 números, ou ser deixado em branco.")
-    @Column(length = 11) // Suficiente para 11 dígitos
+    @Column(length = 11) // Armazena apenas os 11 dígitos, se houver.
     private String telefone;
 
     @NotBlank(message = "O CPF não pode estar em branco (apenas números).")
-    @Size(min = 11, max = 11, message = "CPF deve ter 11 dígitos (apenas números).") // Garante que são exatamente 11
-    @Pattern(regexp = "^[0-9]{11}$", message = "CPF deve conter exatamente 11 números.")
     @Column(nullable = false, unique = true, length = 11)
     private String cpf;
 
+    /**
+     * Lista de treinos associados a este aluno.
+     * - cascade = CascadeType.ALL: Operações de persistência (salvar, deletar) no Aluno são propagadas para seus Treinos.
+     * - orphanRemoval = true: Se um Treino for removido desta lista, ele será deletado do banco de dados.
+     * - fetch = FetchType.LAZY: Os treinos só são carregados do banco quando explicitamente acessados.
+     */
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @ToString.Exclude // Exclui este campo do método toString() para evitar LazyInitializationException e recursão infinita.
     private List<Treino> treinos = new ArrayList<>();
 
-    public Aluno() {
-    }
-
-    public Aluno(String nome, String email, String telefone, String cpf) {
-        this.nome = nome;
-        this.email = email;
-        this.setTelefone(telefone); // Usa o setter para limpar e possivelmente anular
-        this.setCpf(cpf);           // Usa o setter para limpar
-    }
-
-    // Getters e Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getNome() { return nome; }
-    public void setNome(String nome) { this.nome = nome; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getTelefone() { return telefone; }
+    /**
+     * Setter customizado para o campo 'telefone'.
+     * Remove todos os caracteres não numéricos antes de atribuir o valor.
+     * Se a string resultante for vazia, o campo é definido como nulo.
+     * @param telefone O número de telefone a ser definido, possivelmente com máscara.
+     */
     public void setTelefone(String telefone) {
         if (telefone != null) {
             String digitos = telefone.replaceAll("[^0-9]", "");
-            this.telefone = digitos.isEmpty() ? null : digitos; // Converte string vazia para null
+            this.telefone = digitos.isEmpty() ? null : digitos;
         } else {
             this.telefone = null;
         }
     }
 
-    public String getCpf() { return cpf; }
+    /**
+     * Setter customizado para o campo 'cpf'.
+     * Remove todos os caracteres não numéricos antes de atribuir o valor.
+     * @param cpf O CPF a ser definido, possivelmente com máscara.
+     */
     public void setCpf(String cpf) {
         if (cpf != null) {
             this.cpf = cpf.replaceAll("[^0-9]", "");
-            // Não converter CPF para null se vazio, pois é @NotBlank
         } else {
-            this.cpf = null; // Permitir null antes da validação @NotBlank pegar
+            this.cpf = null;
         }
     }
 
-    public List<Treino> getTreinos() { return treinos; }
-    public void setTreinos(List<Treino> treinos) { this.treinos = treinos; }
-
+    /**
+     * Método auxiliar para adicionar um treino a este aluno, mantendo a consistência
+     * do relacionamento bidirecional.
+     * @param treino O treino a ser adicionado.
+     */
     public void addTreino(Treino treino) {
         treinos.add(treino);
         treino.setAluno(this);
     }
 
+    /**
+     * Método auxiliar para remover um treino deste aluno, mantendo a consistência
+     * do relacionamento bidirecional.
+     * @param treino O treino a ser removido.
+     */
     public void removeTreino(Treino treino) {
         treinos.remove(treino);
         treino.setAluno(null);
     }
 
+    /**
+     * Compara dois objetos Aluno com base em seus IDs.
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Aluno aluno = (Aluno) o;
-        return Objects.equals(id, aluno.id);
+        return id != null && id.equals(aluno.id);
     }
 
+    /**
+     * Gera um hash code baseado no ID do aluno.
+     */
     @Override
-    public int hashCode() { return Objects.hash(id); }
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 
+    /**
+     * Gera uma representação em String do objeto Aluno.
+     * O campo 'treinos' é excluído pela anotação @ToString.Exclude.
+     */
     @Override
     public String toString() {
         return "Aluno{" +

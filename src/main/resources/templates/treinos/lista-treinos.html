@@ -8,6 +8,7 @@
 </head>
 <body>
 <div class="page-container">
+  <!-- Cabeçalho com links de navegação e ação principal -->
   <div class="header-actions">
     <a th:href="@{/web/alunos}" class="back-link">
       <i class="fa-solid fa-arrow-left"></i>
@@ -24,9 +25,11 @@
     <h1>Aluno não especificado ou não encontrado.</h1>
   </div>
 
+  <!-- Seção para exibir mensagens de feedback (sucesso ou erro) -->
   <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
   <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
 
+  <!-- Tabela é exibida apenas se a lista de treinos NÃO estiver vazia -->
   <div th:if="${aluno != null}">
     <table th:if="${not #lists.isEmpty(treinos)}">
       <thead>

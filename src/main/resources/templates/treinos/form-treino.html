@@ -35,6 +35,8 @@
             <div th:if="${#fields.hasErrors('descricao')}" th:errors="*{descricao}" class="error-message"></div>
         </div>
         <hr>
+
+        <!-- Seção de Exercícios Dinâmicos -->
         <h4>Exercícios</h4>
         <div id="exerciciosContainerCreate">
             <div th:each="exDTO, iterStat : *{exercicios}" class="exercise-item">
@@ -47,6 +49,7 @@
                 <button type="button" class="remove-exercise-btn"><i class="fa-solid fa-trash-can"></i></button>
             </div>
         </div>
+        <!-- Botão para adicionar novos campos de exercício via JavaScript -->
         <button type="button" id="addExercicioBtnCreate" class="add-exercise-btn"><i class="fa-solid fa-plus"></i> Adicionar Exercício</button>
         <hr><br/>
         <div>
@@ -98,7 +101,7 @@
         <p class="message error">Aluno não encontrado. Não é possível gerenciar treinos.</p>
     </div>
 
-    <!-- SEÇÃO DE NAVEGAÇÃO MODIFICADA -->
+    <!-- Links de navegação para voltar -->
     <div class="form-footer-nav">
         <a th:if="${aluno != null}" th:href="@{/web/alunos/{alunoId}/treinos(alunoId=${aluno.id})}" class="back-link">
             <i class="fa-solid fa-clipboard-list"></i>

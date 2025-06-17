@@ -1,3 +1,7 @@
+/**
+ * Adiciona os listeners de evento quando o conteúdo do DOM estiver totalmente carregado.
+ * Configura a lógica de formulário dinâmico para os containers de exercícios.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     // Configura a lógica para o formulário de criação
     const createContainer = document.getElementById('exerciciosContainerCreate');
@@ -41,7 +45,7 @@ function setupDynamicExerciseHandling(container, addButton, idSuffix) {
         container.appendChild(newExercicioDiv);
     });
 
-    // Evento para REMOVER um exercício (usando delegação de eventos)
+    // Evento para REMOVER um exercício
     container.addEventListener('click', (event) => {
         if (event.target.classList.contains('remove-exercise-btn')) {
             event.target.closest('.exercise-item').remove();
@@ -51,7 +55,7 @@ function setupDynamicExerciseHandling(container, addButton, idSuffix) {
 }
 
 /**
- * Reindexa os nomes e IDs dos campos de exercício para que sejam sequenciais (0, 1, 2, ...).
+ * Reindexa os nomes e IDs dos campos de exercício para que sejam sequenciais.
  * @param {HTMLElement} container - O container dos exercícios.
  * @param {string} idSuffix - O sufixo de ID.
  */
@@ -64,7 +68,6 @@ function reindexExercises(container, idSuffix) {
         const seriesLabel = item.querySelector(`label[for*="seriesRepeticoes"]`);
         const seriesInput = item.querySelector(`input[id*="seriesRepeticoes"]`);
 
-        // CORREÇÃO APLICADA AQUI: Removidas as barras invertidas
         if (nomeLabel) nomeLabel.htmlFor = `exercicios[${index}].nomeExercicio${idSuffix}`;
         if (nomeInput) {
             nomeInput.id = `exercicios[${index}].nomeExercicio${idSuffix}`;

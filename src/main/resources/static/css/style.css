@@ -3,14 +3,14 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     margin: 0;
     padding: 20px;
-    background-color: #f4f7f6; /* Fundo cinza bem claro e neutro */
+    background-color: #f4f7f6;
     color: #3d3d3d;
     line-height: 1.6;
 }
 
 /* Container principal para centralizar conteúdo nas páginas */
 .page-container {
-    max-width: 1100px; /* Largura máxima para tabelas maiores */
+    max-width: 1100px;
     margin: 20px auto;
     padding: 30px;
     background-color: #ffffff;
@@ -18,7 +18,7 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.form-container { /* Mantém o estilo para formulários, que já estava bom */
+.form-container {
     max-width: 600px;
     margin: 20px auto;
     padding: 30px;
@@ -28,7 +28,7 @@ body {
 }
 
 h1, h2, h3 {
-    color: #2c3e50; /* Azul escuro, sóbrio */
+    color: #2c3e50;
     margin-top: 0;
     margin-bottom: 20px;
 }
@@ -42,8 +42,8 @@ table {
     border-collapse: collapse;
     margin-bottom: 20px;
     border: 1px solid #dee2e6;
-    border-radius: 6px; /* Borda arredondada na tabela */
-    overflow: hidden; /* Garante que o border-radius funcione */
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 th, td {
@@ -54,17 +54,17 @@ th, td {
 }
 
 th {
-    background-color: #f8f9fa; /* Cabeçalho bem claro */
-    color: #495057; /* Texto do cabeçalho mais escuro */
+    background-color: #f8f9fa;
+    color: #495057;
     text-transform: uppercase;
     font-size: 0.85em;
-    font-weight: 600; /* Mais peso na fonte */
+    font-weight: 600;
     letter-spacing: 0.5px;
     border-top: 1px solid #dee2e6;
 }
 
 tr:hover {
-    background-color: #f1f3f5; /* Efeito hover sutil */
+    background-color: #f1f3f5;
 }
 
 /* Links e Botões */
@@ -86,7 +86,7 @@ a:hover {
     border: none;
     text-align: center;
     transition: all 0.2s ease-in-out;
-    display: inline-flex; /* Para alinhar ícone e texto */
+    display: inline-flex;
     align-items: center;
     gap: 5px;
 }
@@ -97,8 +97,8 @@ a:hover {
 /* EFEITO HOVER MELHORADO */
 .actions a:hover, .actions button:hover,
 .add-button:hover, button[type="submit"]:hover {
-    filter: brightness(110%); /* Efeito de brilho sutil ao passar o mouse */
-    transform: translateY(-2px); /* Efeito de levantar */
+    filter: brightness(110%);
+    transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -168,9 +168,9 @@ button[type="submit"] { background-color: #28a745; }
 .back-link {
     display: inline-flex;
     align-items: center;
-    gap: 8px; /* Espaço entre o ícone e o texto */
+    gap: 8px;
     padding: 8px 15px;
-    background-color: #6c757d; /* Cinza */
+    background-color: #6c757d;
     color: white;
     border-radius: 5px;
     font-weight: 500;
@@ -178,36 +178,36 @@ button[type="submit"] { background-color: #28a745; }
 }
 .back-link:hover {
     background-color: #5a6268;
-    color: white; /* Mantém a cor do texto no hover */
+    color: white;
     text-decoration: none;
 }
 
 /* Estilos para a lista de exercícios dentro da tabela */
 .exercicios-cell ul.exercicios-lista {
     margin: 0;
-    padding-left: 18px; /* Adiciona um recuo para a lista */
-    list-style-type: disc; /* Estilo de marcador */
+    padding-left: 18px;
+    list-style-type: disc;
 }
 
 .exercicios-cell li.exercicio-item {
-    padding: 3px 0; /* Espaçamento entre os itens da lista */
-    white-space: nowrap; /* Evita que o texto do exercício quebre a linha */
+    padding: 3px 0;
+    white-space: nowrap;
 }
 
 .exercicio-item .nome-exercicio {
-    font-weight: bold; /* Deixa o nome do exercício em negrito */
+    font-weight: bold;
 }
 
 .exercicio-item .series-repeticoes {
-    color: #555; /* Cor mais suave para as séries/repetições */
+    color: #555;
 }
-/* Adicione no final do arquivo */
+
 .actions .print-link {
-    background-color: #6c757d; /* Cinza */
+    background-color: #6c757d;
     color: white;
 }
 
-/* Estilos para o formulário de treino (adicionados) */
+/* Estilos para o formulário de treino  */
 .exercise-item {
     padding: 10px;
     margin-bottom: 10px;
@@ -215,7 +215,7 @@ button[type="submit"] { background-color: #28a745; }
     border-radius: 4px;
     background-color: #fdfdfd;
     display: flex;
-    flex-wrap: wrap; /* Permite quebra de linha se não couber */
+    flex-wrap: wrap;
     align-items: center;
     gap: 10px;
 }
@@ -227,7 +227,7 @@ button[type="submit"] { background-color: #28a745; }
 
 .exercise-item input[type="text"] {
     flex-grow: 1;
-    min-width: 150px; /* Largura mínima para os inputs */
+    min-width: 150px;
 }
 
 .remove-exercise-btn, .add-exercise-btn {
@@ -237,21 +237,20 @@ button[type="submit"] { background-color: #28a745; }
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.9em;
-    height: fit-content; /* Ajustar altura do botão */
+    height: fit-content;
 }
 
 .remove-exercise-btn {
-    background-color: #dc3545; /* Vermelho */
+    background-color: #dc3545;
 }
 
 .add-exercise-btn {
-    background-color: #28a745; /* Verde */
+    background-color: #28a745;
     margin-top: 10px;
 }
 
-/* A classe .error-message já pode existir, mas certifique-se de que tenha estes estilos */
 .error-message {
     color: red;
     font-size: 0.9em;
-    width: 100%; /* Para ocupar a linha abaixo do input */
+    width: 100%;
 }
